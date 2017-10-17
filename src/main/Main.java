@@ -13,14 +13,15 @@ public class Main {
 		int x2 = p2.getX();
 		int y1 = p1.getY();
 		int y2 = p2.getY();
-		return Math.hypot(x1-x2, y1-y2);
+//		return Math.hypot(x1-x2, y1-y2);
+		return Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2);
 	}
 	
 	/**
 	 * Retorna true se o cachorro pode sair de p1 para p2, antes de ir para p3
-	 * @param p1 ponto de partida em que o dono e o cachorro estão
+	 * @param p1 ponto de partida em que o dono e o cachorro estï¿½o
 	 * @param p2 um ponto interessante para o cachorro
-	 * @param p3 proximo ponto em que o dono estará
+	 * @param p3 proximo ponto em que o dono estarï¿½
 	 * @return true se o cachorro pode desviar, false cc
 	 */
 	public static boolean podeDesviar(Point p1, Point p2, Point p3) {
@@ -180,6 +181,7 @@ public class Main {
 					Point p2 = pontoInteressante.getPonto();
 					Point p3 = pontoDonoDestino.getPonto();
 					if(podeDesviar(p1, p2, p3)) {
+						System.out.println("Tem aresta de " + p1 + " para " + p2);
 						adicionarAresta(i, j, 1);
 					}
 				}
@@ -262,8 +264,10 @@ public class Main {
 		
 		public void aumentarFluxo(Vertice origem, Vertice destino, int qtdeFluxo) {
 			Vertice atual = destino, anterior;
+			
 			while(true) {
 				anterior = atual.getPai();
+				
 				f[anterior.getNumeroVertice()][atual.getNumeroVertice()] += qtdeFluxo;
 				//cf(u,v) = c(u,v) - f(u,v)
 				c[anterior.getNumeroVertice()][atual.getNumeroVertice()] -= qtdeFluxo;
@@ -271,15 +275,14 @@ public class Main {
 				//f(u,v) = -f(v,u)
 				f[atual.getNumeroVertice()][anterior.getNumeroVertice()] = - f[anterior.getNumeroVertice()][atual.getNumeroVertice()];
 
+				if(!atual.getAdjacentes().contains(anterior)){
+					atual.adicionarAresta(anterior);
+				}
+				c[atual.getNumeroVertice()][anterior.getNumeroVertice()] += qtdeFluxo;
+				
 				//Se usou o maximo da banda naquela aresta, deve ser eliminada do grafo
 				if(c[anterior.getNumeroVertice()][atual.getNumeroVertice()] == 0) {
 					anterior.removerAresta(atual);
-					//E a aresta no sentido contraria deve ser criada, como segue a regra do grafo residual
-					atual.adicionarAresta(anterior);
-					c[atual.getNumeroVertice()][anterior.getNumeroVertice()] = qtdeFluxo;
-				}
-				else {
-					c[atual.getNumeroVertice()][anterior.getNumeroVertice()] += qtdeFluxo;
 				}
 				
 				//Se chegou na origem, ja acabou de percorrer o caminho
@@ -298,10 +301,13 @@ public class Main {
 			Vertice origem = this.vertices.get(verticeOrigem);
 			Vertice destino = this.vertices.get(verticeDestino);
 			int gargalo;
+			int fluxo = 0;
 			while(existeCaminhoAumentante(origem, destino)) {
 				gargalo = coletarGargaloDoCaminho(origem, destino);
+				fluxo += gargalo;
 				aumentarFluxo(origem, destino, gargalo);
 			}
+			System.out.println("VALOR DO FLUXO: " + fluxo);
 		}
 		
 		public List<Point> coletarRotaDoCachorro(){
