@@ -3,13 +3,8 @@ package main;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
-import java.util.Random;
 import java.util.Scanner;
-
-import javax.swing.plaf.synth.SynthSeparatorUI;
-
 
 public class Main {
 
@@ -60,6 +55,9 @@ public class Main {
 			this.y = y;
 		}
 		
+		public String toString() {
+			return "(" + this.x + "," + this.y + ")";
+		}
 	}
 	
 	public class Vertice {
@@ -205,17 +203,13 @@ public class Main {
 			Vertice verticeOrigem = this.vertices.get(origem);
 			Vertice verticeDestino = this.vertices.get(destino);
 			verticeOrigem.adicionarAresta(verticeDestino);
-			verticeDestino.adicionarAresta(verticeOrigem);
-			//O fluxo de banda larga pode ser passado em ambos os sentidos
 			c[origem][destino] = capacidade;
-			c[destino][origem] = capacidade;
 		}
 		
 		public void removerAresta(int origem, int destino) {
 			Vertice verticeOrigem = this.vertices.get(origem);
 			Vertice verticeDestino = this.vertices.get(destino);
 			verticeOrigem.removerAresta(verticeDestino);
-			verticeDestino.removerAresta(verticeOrigem);
 		}
 		
 		public boolean existeCaminhoAumentante(Vertice origem, Vertice destino) {
@@ -271,15 +265,21 @@ public class Main {
 			while(true) {
 				anterior = atual.getPai();
 				f[anterior.getNumeroVertice()][atual.getNumeroVertice()] += qtdeFluxo;
+				//cf(u,v) = c(u,v) - f(u,v)
 				c[anterior.getNumeroVertice()][atual.getNumeroVertice()] -= qtdeFluxo;
-				//Arestas bidirecionais, entao a capacidade diminui para os dois lados
-				c[atual.getNumeroVertice()][anterior.getNumeroVertice()] = c[anterior.getNumeroVertice()][atual.getNumeroVertice()];
 				
+				//f(u,v) = -f(v,u)
+				f[atual.getNumeroVertice()][anterior.getNumeroVertice()] = - f[anterior.getNumeroVertice()][atual.getNumeroVertice()];
+
 				//Se usou o maximo da banda naquela aresta, deve ser eliminada do grafo
 				if(c[anterior.getNumeroVertice()][atual.getNumeroVertice()] == 0) {
-					//Elimina as duas por ser bidirecional
 					anterior.removerAresta(atual);
-					atual.removerAresta(anterior);
+					//E a aresta no sentido contraria deve ser criada, como segue a regra do grafo residual
+					atual.adicionarAresta(anterior);
+					c[atual.getNumeroVertice()][anterior.getNumeroVertice()] = qtdeFluxo;
+				}
+				else {
+					c[atual.getNumeroVertice()][anterior.getNumeroVertice()] += qtdeFluxo;
 				}
 				
 				//Se chegou na origem, ja acabou de percorrer o caminho
@@ -297,11 +297,9 @@ public class Main {
 			int verticeDestino = this.vertices.size() - 1;
 			Vertice origem = this.vertices.get(verticeOrigem);
 			Vertice destino = this.vertices.get(verticeDestino);
-			int fluxo = 0;
 			int gargalo;
 			while(existeCaminhoAumentante(origem, destino)) {
 				gargalo = coletarGargaloDoCaminho(origem, destino);
-				fluxo += gargalo;
 				aumentarFluxo(origem, destino, gargalo);
 			}
 		}
@@ -312,7 +310,7 @@ public class Main {
 				rotaDoCachorro.add(this.vertices.get(i).getPonto());
 				for (int j = this.pontosDoDono; j < this.pontosDoDono + this.pontosInteressantes; j++) {
 					//Se ta passando fluxo, eh pq o cachorro pode fazer esse desvio
-					if(f[i][j] > 0) {
+					if(f[i][j] == 1) {
 						rotaDoCachorro.add(this.vertices.get(j).getPonto());
 					}
 				}
